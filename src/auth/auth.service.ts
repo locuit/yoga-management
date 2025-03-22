@@ -23,18 +23,15 @@ import { IAuthService } from './auth';
 import { AuthRegisterDto } from './dtos/auth-register.dto';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { compareHash } from 'src/utils/helpers';
-import { IMailsService } from 'src/mails/mails';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { NullableType } from 'src/utils/types/nullable.type';
 import { IForgotPasswordService } from 'src/forgot-password/forgot-password';
-import { SocialType } from 'src/social/types/social.type';
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 
 @Injectable()
 export class AuthService implements IAuthService {
   constructor(
     @Inject(Services.USERS) private readonly usersService: IUsersService,
-    @Inject(Services.MAILS) private readonly mailsService: IMailsService,
     @Inject(Services.SESSION) private readonly sessionService: ISessionService,
     @Inject(Services.FORGOT_PASSWORD)
     private readonly forgotPasswordService: IForgotPasswordService,
@@ -102,76 +99,6 @@ export class AuthService implements IAuthService {
       user,
     };
   }
-  async validateSocialLogin(
-    authProvider: AuthProvidersEnum,
-    socialData: SocialType,
-  ): Promise<LoginResponseType> {
-    let user: NullableType<User>;
-    const socialEmail = socialData.email?.toLowerCase();
-
-    const userByEmail = await this.usersService.findOneUser({
-      email: socialEmail,
-    });
-
-    user = await this.usersService.findOneUser({
-      socialId: socialData.id,
-      provider: authProvider,
-    });
-
-    if (user) {
-      if (socialEmail && !userByEmail) {
-        user.email = socialEmail;
-      }
-      await this.usersService.saveUser(user);
-    } else if (userByEmail) {
-      user = userByEmail;
-    } else {
-      user = await this.usersService.createUser({
-        email: socialEmail ?? null,
-        firstName: socialData.firstName ?? null,
-        lastName: socialData.lastName ?? null,
-        socialId: socialData.id,
-        provider: authProvider,
-        status: UserStatus.Active,
-      });
-
-      user = await this.usersService.findOneUser({
-        id: user.id,
-      });
-    }
-
-    if (!user) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            user: 'userNotFound',
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-
-    const session = await this.sessionService.create({
-      user,
-    });
-
-    const {
-      token: jwtToken,
-      refreshToken,
-      tokenExpires,
-    } = await this.getTokensData({
-      id: user.id,
-      sessionId: session.id,
-    });
-
-    return {
-      refreshToken,
-      token: jwtToken,
-      tokenExpires,
-      user,
-    };
-  }
 
   async registerUser(registerDto: AuthRegisterDto): Promise<void> {
     const hash = crypto
@@ -184,14 +111,6 @@ export class AuthService implements IAuthService {
       email: registerDto.email,
       status: UserStatus.Inactive,
       hash,
-    });
-
-    await this.mailsService.confirmRegisterUser({
-      to: registerDto.email,
-      data: {
-        hash,
-        user: registerDto.firstName,
-      },
     });
   }
 
@@ -245,14 +164,6 @@ export class AuthService implements IAuthService {
     await this.forgotPasswordService.create({
       hash,
       user,
-    });
-
-    await this.mailsService.forgotPassword({
-      to: email,
-      data: {
-        hash,
-        user: user.firstName,
-      },
     });
   }
 

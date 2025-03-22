@@ -14,7 +14,6 @@ import { IAuthService } from './auth';
 import { AuthEmailLoginDto } from './dtos/auth-email-login.dto';
 import { LoginResponseType } from './types/login-response.type';
 import { AuthRegisterDto } from './dtos/auth-register.dto';
-import { AuthConfirmEmailDto } from './dtos/auth-confirm-email.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { NullableType } from 'src/utils/types/nullable.type';
 import { User } from 'src/users/entities/user.entity';
@@ -39,14 +38,6 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterDto): Promise<void> {
     return await this.authService.registerUser(createUserDto);
-  }
-
-  @Post('confirm-email')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async confirmEmail(
-    @Body() confirmEmailDto: AuthConfirmEmailDto,
-  ): Promise<void> {
-    return this.authService.confirmEmail(confirmEmailDto.hash);
   }
 
   @ApiBearerAuth()

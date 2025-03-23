@@ -3,12 +3,11 @@ import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 import { lowerCaseTransformer } from 'src/utils/transformers/lower-case.transformer';
-import { UserStatus } from '../entities/user.entity';
-import { AuthProvidersEnum } from 'src/auth/enums/auth-providers.enum';
+import { UserRole, UserStatus } from '../entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'ramez@gmail.com' })
+  @ApiProperty({ example: 'admin@gmail.com' })
   @Transform(lowerCaseTransformer)
   @IsNotEmpty()
   @IsEmail()
@@ -18,17 +17,14 @@ export class CreateUserDto {
   @MinLength(6)
   password?: string;
 
-  @ApiProperty({ example: 'Ramez' })
+  @ApiProperty({ example: 'Gymer' })
   @IsNotEmpty()
-  firstName: string | null;
+  fullName: string | null;
 
-  @ApiProperty({ example: 'Ben Taher' })
-  @IsNotEmpty()
-  lastName: string | null;
+  @ApiProperty({ example: 'Admin', enum: UserRole })
+  role: UserRole;
 
-  provider?: AuthProvidersEnum;
   status?: UserStatus;
-  socialId?: string | null;
 
   hash?: string | null;
 }

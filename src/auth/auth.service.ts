@@ -9,7 +9,6 @@ import { IUsersService } from 'src/users/users';
 import { Services } from 'src/utils/constants';
 import { AuthEmailLoginDto } from './dtos/auth-email-login.dto';
 import { LoginResponseType } from './types/login-response.type';
-import { AuthProvidersEnum } from './enums/auth-providers.enum';
 import crypto from 'crypto';
 
 import { User, UserStatus } from 'src/users/entities/user.entity';
@@ -51,18 +50,6 @@ export class AuthService implements IAuthService {
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
             email: 'notFound',
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-
-    if (user.provider !== AuthProvidersEnum.email) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: `needLoginViaProvider:${user.provider}`,
           },
         },
         HttpStatus.UNPROCESSABLE_ENTITY,
@@ -118,26 +105,6 @@ export class AuthService implements IAuthService {
     return await this.usersService.findOneUser({
       id: userJwtPayload.id,
     });
-  }
-
-  async confirmEmail(hash: string): Promise<void> {
-    const user = await this.usersService.findOneUser({
-      hash,
-    });
-
-    if (!user) {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: `notFound`,
-        },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    user.hash = null;
-    user.status = UserStatus.Active;
-    await this.usersService.saveUser(user);
   }
 
   async forgotPassword(email: string): Promise<void> {

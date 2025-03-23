@@ -13,7 +13,6 @@ import {
 import { EntityHelper } from 'src/utils/entity-helper';
 
 import { Exclude } from 'class-transformer';
-import { AuthProvidersEnum } from 'src/auth/enums/auth-providers.enum';
 import { hashPassword } from 'src/utils/helpers';
 
 export enum UserStatus {
@@ -21,13 +20,33 @@ export enum UserStatus {
   Inactive = 'inactive',
 }
 
+export enum UserRole {
+  Admin = 'admin',
+  Manager = 'manager',
+  Staff = 'staff',
+  Trainer = 'trainer',
+}
+
 @Entity()
 export class User extends EntityHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: String, unique: true })
+  username: string;
+
+  @Index()
+  @Column({ type: String, nullable: true })
+  fullName: string;
+
   @Column({ type: String, unique: true, nullable: true })
   email: string | null;
+
+  @Column({ type: String, nullable: true })
+  phoneNumber: string | null;
+
+  @Column({ type: 'float', nullable: true })
+  salary: number | null;
 
   @Column({ nullable: true })
   @Exclude({ toPlainOnly: true })
@@ -49,23 +68,11 @@ export class User extends EntityHelper {
     }
   }
 
-  @Column({ default: AuthProvidersEnum.email })
-  provider: string;
-
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.Inactive })
   status: UserStatus;
 
-  @Index()
-  @Column({ type: String, nullable: true })
-  socialId: string | null;
-
-  @Index()
-  @Column({ type: String, nullable: true })
-  firstName: string | null;
-
-  @Index()
-  @Column({ type: String, nullable: true })
-  lastName: string | null;
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.Staff })
+  role: UserRole;
 
   @CreateDateColumn()
   createdAt: Date;
